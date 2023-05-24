@@ -2,3 +2,8 @@ obj
 bin
 appsettings.json
 *.db
+*.suo
+*.vsidx
+*.lock
+*.v2
+*.v6.1

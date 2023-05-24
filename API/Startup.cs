@@ -19,12 +19,15 @@ namespace API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddScoped<IProductRepository, ProductRepository>();
+            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
             services.AddControllers();
             services.AddDbContext<StoreContext>(x =>
              x.UseSqlite(
                 _config.GetConnectionString("DefaultConnection")));
-            services.AddSwaggerGen(c =>
-            {
+            services.AddSwaggerGen(c => {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebAPIv5", Version = "v1" });
             });
         }
@@ -43,10 +46,11 @@ namespace API
 
             app.UseRouting();
 
+            app.UseStaticFiles();
+
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints =>
-            {
+            app.UseEndpoints(endpoints => {
                 endpoints.MapControllers();
             });
         }
