@@ -1,7 +1,5 @@
-using Core.Interfaces;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
 
 namespace API
 {
@@ -13,22 +11,12 @@ namespace API
             _config = config;
         }
 
-        public IConfiguration Configuration { get; }
-
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddScoped<IProductRepository, ProductRepository>();
-            services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
-
-            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
             services.AddControllers();
-            services.AddDbContext<StoreContext>(x =>
-             x.UseSqlite(
-                _config.GetConnectionString("DefaultConnection")));
-            services.AddSwaggerGen(c => {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebAPIv5", Version = "v1" });
+            services.AddDbContext<StoreContext>(x => {
+                x.UseSqlite(_config.GetConnectionString("DefaultConnection"));
             });
         }
 
@@ -38,15 +26,11 @@ namespace API
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebAPIv5 v1"));
             }
 
             app.UseHttpsRedirection();
 
             app.UseRouting();
-
-            app.UseStaticFiles();
 
             app.UseAuthorization();
 

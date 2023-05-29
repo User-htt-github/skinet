@@ -1,38 +1,43 @@
+using API.Extensions;
+using API.Middleware;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-namespace API
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddApplicationServices(builder.Configuration);
+
+var app = builder.Build();
+
+app.UseMiddleware<ExceptionMiddleware>();
+app.UseStatusCodePagesWithReExecute("/errors/{0}");
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.UseStaticFiles();
+
+app.UseCors("CorsPolicy");
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+using var scope = app.Services.CreateScope();
+var services = scope.ServiceProvider;
+var context = services.GetRequiredService<StoreContext>();
+var logger = services.GetRequiredService<ILogger<Program>>();
+var loggerFactory = services.GetRequiredService<ILoggerFactory>();
+try
 {
-    public class Program
-    {
-        public static async Task Main(string[] args)
-        {
-            var host = CreateHostBuilder(args).Build();
-            using (var scope = host.Services.CreateScope())
-            {
-                var services = scope.ServiceProvider;
-                var loggerFactory = services.GetRequiredService<ILoggerFactory>();
-                try
-                {
-                    var context = services.GetRequiredService<StoreContext>();
-                    await context.Database.MigrateAsync();
-                    await StoreContextSeed.SeedAsync(context, loggerFactory);
-                }
-                catch (Exception ex)
-                {
-                    var logger = loggerFactory.CreateLogger<Program>();
-                    logger.LogError(ex, "An error has occured during migration");
-                }
-            }
-
-            host.Run();
-        }
-
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
+    await context.Database.MigrateAsync();
+    await StoreContextSeed.SeedAsync(context, loggerFactory);
 }
+catch (Exception ex)
+{
+    logger.LogError(ex, "An error occured during migration");
+}
+
+app.Run();
